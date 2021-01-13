@@ -30,7 +30,7 @@ OBJS_KRNL := $(OBJS_KASM) $(OBJS_KCPP)
 build: Build/Kernel.hdd
 build-pxe: Build/PXEEnv/ready
 run: Build/Kernel.hdd
-	qemu-system-x86_64 -hda Build/kernel.iso -accel $(ACCEL)
+	qemu-system-x86_64 -hda Build/Kernel.hdd -accel $(ACCEL)
 run-pxe: Build/PXEEnv/ready
 	qemu-system-x86_64 -cpu host -accel $(ACCEL) \
 		-netdev user,id=net0,net=192.168.88.0/24,tftp=Build/PXEEnv,bootfile=/limine-pxe.bin \
@@ -39,24 +39,15 @@ run-pxe: Build/PXEEnv/ready
 		-device virtio-rng-pci,rng=virtio-rng0,id=rng0,bus=pci.0,addr=0x9 \
 		-boot n
 
-Build/Kernel.hdd: Build/DataPart.hdd
+Build/Kernel.hdd: Build/DriveEnv/ready
+	rm Build/Kernel.hdd
 	fallocate Build/Kernel.hdd -l 24M
 	parted -s Build/Kernel.hdd mklabel gpt
 	parted -s Build/Kernel.hdd mkpart primary 2048s 100%
-	dd if=Build/DataPart.hdd of=Build/Kernel.hdd bs=512 seek=2048 status=progress conv=notrunc
+	echfs-utils -g -p0 Build/Kernel.hdd quick-format 512
+	sh import.sh
 	limine-install Build/Kernel.hdd
 
-Build/DataPart.hdd: Build/DriveEnv/ready
-	mke2fs \
-		-L 'CePeOS' \
-		-N 0 \
-		-O ^64bit \
-		-d Build/DriveEnv \
-		-m 5 \
-		-r 1 \
-		-t ext2 \
-		Build/DataPart.hdd \
-		128M
 
 Build/DriveEnv/ready: Build/Env/ready
 	mkdir -vp Build/DriveEnv
@@ -67,7 +58,7 @@ Build/PXEEnv/ready: Build/Env/ready
 	cp -r Build/Env/* Build/PXEEnv
 	touch Build/PXEEnv/ready
 
-Build/Env/ready: Build/Kernel/Final.elf
+Build/Env/ready: Build/Kernel/Final.elf Config/limine.cfg
 	mkdir -vp Build/Env/Boot
 	cp Config/limine.cfg Build/Env
 	cp Build/Kernel/Final.elf Build/Env/Boot/Kernel.elf
