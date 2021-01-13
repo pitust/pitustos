@@ -26,7 +26,7 @@ extern "C" uint64_t _ctors_end;
 
 extern "C" void _start(Kernel::Stivale::StivaleStruct *stivale2_struct) {
     // Begin call global ctors
-    auto cte = &_ctors_end);
+    auto cte = &_ctors_end;
 	auto iter = &_ctors_begin;
 	for (;iter != cte;iter++) {
 		((void (*)())iter)();
