@@ -25,9 +25,16 @@ SECTIONS
         *(.data*)
 		*(.comment)
     }
+
+	_ctors_begin = .;
+	.ctors : {
+		*(.ctors)
+	}
+	_ctors_end = .;
  
     .bss : {
         *(COMMON)
         *(.bss*)
     }
+	
 }

@@ -26,6 +26,6 @@ ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 2
 CompactNamespaces: false
 IndentCaseLabels: true
-IndentWidth: 2
-TabWidth: 2
+IndentWidth: 4
+TabWidth: 4
 UseTab: Never

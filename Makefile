@@ -26,18 +26,27 @@ OBJS_KASM := $(patsubst Kernel/%.s,Build/Kernel/%.o,$(wildcard Kernel/*.s))
 OBJS_KRNL := $(OBJS_KASM) $(OBJS_KCPP)
 
 #### RULES ####
-.PHONY: build build-pxe run run-pxe
+.PHONY: build build-pxe run run-pxe run-pause run-remote run-remoted
 build: Build/Kernel.hdd
 build-pxe: Build/PXEEnv/ready
 run: Build/Kernel.hdd
-	qemu-system-x86_64 -hda Build/Kernel.hdd -accel $(ACCEL)
+	qemu-system-x86_64 -hda Build/Kernel.hdd -accel $(ACCEL) -s
+debug: Build/Kernel.hdd
+	qemu-system-x86_64 -hda Build/Kernel.hdd -accel $(ACCEL) -s -S
+run-pause: Build/Kernel.hdd
+	nohup qemu-system-x86_64 -hda Build/Kernel.hdd -accel $(ACCEL) -s -S &
 run-pxe: Build/PXEEnv/ready
 	qemu-system-x86_64 -cpu host -accel $(ACCEL) \
 		-netdev user,id=net0,net=192.168.88.0/24,tftp=Build/PXEEnv,bootfile=/limine-pxe.bin \
 		-device virtio-net-pci,netdev=net0 \
 		-object rng-random,id=virtio-rng0,filename=/dev/urandom \
 		-device virtio-rng-pci,rng=virtio-rng0,id=rng0,bus=pci.0,addr=0x9 \
-		-boot n
+		-boot n -s
+run-remote:
+	echo "make run-pause" >/dev/tcp/localhost/2345
+run-remoted:
+	socat TCP4-LISTEN:2345,fork,reuseaddr EXEC:/bin/sh
+
 
 Build/Kernel.hdd: Build/DriveEnv/ready
 	rm Build/Kernel.hdd
